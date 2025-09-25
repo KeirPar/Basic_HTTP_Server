@@ -1,0 +1,99 @@
+name: Autograde (Hidden Tests - Python, src/webserver.py, matrix)
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autograde-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    env:
+      PORT: "6789"
+
+    steps:
+      - name: Checkout student repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install student deps (root or src)
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f src/requirements.txt ]; then pip install -r src/requirements.txt; fi
+
+      # --- Fetch HIDDEN tests from your PRIVATE repo ---
+      - name: Checkout hidden tests
+        uses: actions/checkout@v4
+        with:
+          repository: UBCO-COSC328-W2025-T1/webserver-tests        # updated for this term
+          ref: main                                   # or pin to a tag/commit for fairness
+          token: ${{ secrets.TESTS_REPO_PAT }}        # org secret (read-only PAT)
+          path: .hidden-tests
+
+      - name: Install test-only deps
+        run: |
+          if [ -f ".hidden-tests/requirements.txt" ]; then pip install -r .hidden-tests/requirements.txt; fi
+
+      # --- Start the student's server from src/ on port 6789 ---
+      - name: Start server (src/webserver.py)
+        working-directory: src
+        run: |
+          set -e
+          ( python webserver.py -p 6789 > ../server.log 2>&1 & echo $! > ../server.pid )
+          sleep 1
+
+      - name: Wait for server to be ready
+        run: |
+          for i in {1..60}; do
+            if curl -sSf "http://localhost:${PORT}/" > /dev/null; then
+              echo "Server is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server did not become ready on :${PORT}"
+          echo "---- Last 100 lines of server.log ----"
+          tail -n 100 server.log || true
+          exit 1
+
+      # --- Run rubric-aligned grader (produces junit.xml + grade.json) ---
+      - name: Grade
+        env:
+          BASE_URL: http://localhost:${{ env.PORT }}
+        run: |
+          python .hidden-tests/grade.py
+
+      # --- Upload results for instructors/TAs ---
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autograde-results-py${{ matrix.python-version }}
+          path: |
+            .hidden-tests/junit.xml
+            .hidden-tests/grade.json
+            server.log
+          if-no-files-found: ignore
+
+      # --- Clean up server process ---
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then kill "$(cat server.pid)" || true; fi
