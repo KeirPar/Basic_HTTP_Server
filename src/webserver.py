@@ -93,6 +93,9 @@ def main(argv):
             responseHeader = ""       # this is your empty response
             # Start your coding here!!
 
+            print ("hi")
+
+
             # This line forces the application to through a IO exception
             # You will want to remove it, once you have tested your application
             raise IOError
