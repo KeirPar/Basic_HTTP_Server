@@ -96,28 +96,50 @@ def main(argv):
 
 
             request_method = message.split(' ')[0] # Get the request method (e.g., GET, POST)
-            path = message.split(' ')[1]         # Get the requested path
-            print("Requested path:", path)  # For debugging
+            path = message.split(' ')[1]         # Get the requested file path
+            print("Requested path:", path)  # just checking
 
             t_types = ['.html', '.htm', '.css', '.js', '.json'] #text types allowed
             b_types = ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'] #binary types allowed
 
             # Only handle GET requests for this assignment
             if request_method != "GET":
-                # Send HTTP response message for method not allowed
+                # Send HTTP response message for method not allowed (405)
                 connectionSocket.send("HTTP/1.1 405 Method Not Allowed\r\n\r\n".encode('UTF-8'))
                 connectionSocket.send("<html><head></head><body><h1>405 Method Not Allowed</h1></body></html>\r\n".encode('UTF-8'))
                 connectionSocket.close()
                 return
+            
+            if path == "/":    # if nothing is specified after the /, return index.html
+                path = "/index.html"  # Default to index.html if root is requested    
 
+            filename = path.lstrip("/") #take off leadung /
 
+            if os.path.isfile(filename):
+                # Open and read the HTML file
+                with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+                    body = f.read().encode('UTF-8')
+
+                # Build simple HTTP 200 OK header
+                responseHeader = "HTTP/1.1 200 OK\r\n"
+                responseHeader += f"Date: {datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')}\r\n"
+                responseHeader += "Server: Keirs_Server/1.0\r\n"
+                responseHeader += "Content-Type: text/html\r\n"
+                responseHeader += f"Content-Length: {len(body)}\r\n"
+                responseHeader += "Connection: close\r\n\r\n"
+                
+                
+                # Send header and body
+                connectionSocket.send(responseHeader.encode('UTF-8'))
+                connectionSocket.send(body)
+                connectionSocket.close()
 
             else:
-                raise IOError  #if path doesn't exist, raise IOError
-
+                # File not found → triggers your existing IOError block
+                raise IOError
+            
             # This line forces the application to through a IO exception
             # You will want to remove it, once you have tested your application
-            raise IOError
 
             # Things to do...
             # Extract the path of the requested object from the message
@@ -140,14 +162,14 @@ def main(argv):
 
 
             #once everything is done, send the response header back
-            connectionSocket.send(responseHeader.encode(encoding='UTF-8'))
+          
 
             # Send the content of the requested file to the connection socket
 
             #send something else to indicate the end of the response header
 
             # Close the client connection socket
-            connectionSocket.close()
+     
 
         except IOError:
                 # Send HTTP response message for file not found
