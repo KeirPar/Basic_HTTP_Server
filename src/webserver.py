@@ -93,8 +93,27 @@ def main(argv):
             responseHeader = ""       # this is your empty response
             # Start your coding here!!
 
-            print ("hi")
 
+
+            request_method = message.split(' ')[0] # Get the request method (e.g., GET, POST)
+            path = message.split(' ')[1]         # Get the requested path
+            print("Requested path:", path)  # For debugging
+
+            t_types = ['.html', '.htm', '.css', '.js', '.json'] #text types allowed
+            b_types = ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'] #binary types allowed
+
+            # Only handle GET requests for this assignment
+            if request_method != "GET":
+                # Send HTTP response message for method not allowed
+                connectionSocket.send("HTTP/1.1 405 Method Not Allowed\r\n\r\n".encode('UTF-8'))
+                connectionSocket.send("<html><head></head><body><h1>405 Method Not Allowed</h1></body></html>\r\n".encode('UTF-8'))
+                connectionSocket.close()
+                return
+
+
+
+            else:
+                raise IOError  #if path doesn't exist, raise IOError
 
             # This line forces the application to through a IO exception
             # You will want to remove it, once you have tested your application
