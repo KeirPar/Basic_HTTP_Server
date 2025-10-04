@@ -113,8 +113,19 @@ def main(argv):
             if path == "/":    # if nothing is specified after the /, return index.html
                 path = "/index.html"  # Default to index.html if root is requested    
 
-            filename = path.lstrip("/") #take off leadung /
+            filename = path.lstrip("/") #take off leading /
 
+            # Check the file type
+            file_ext = os.path.splitext(filename)[1].lower()
+
+            if file_ext not in t_types:
+                # Send HTTP response for unsupported file type
+                connectionSocket.send("HTTP/1.1 403 Forbidden\r\n\r\n".encode('UTF-8'))
+                connectionSocket.send("<html><head></head><body><h1>403 Forbidden - Unsupported file type</h1></body></html>\r\n".encode('UTF-8'))
+                connectionSocket.close()
+                return
+            
+                
             if os.path.isfile(filename):
                 # Open and read the HTML file
                 with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
@@ -128,7 +139,7 @@ def main(argv):
                 responseHeader += f"Content-Length: {len(body)}\r\n"
                 responseHeader += "Connection: close\r\n\r\n"
                 
-                
+
                 # Send header and body
                 connectionSocket.send(responseHeader.encode('UTF-8'))
                 connectionSocket.send(body)
