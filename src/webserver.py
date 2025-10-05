@@ -98,7 +98,7 @@ def main(argv):
             request_method = message.split(' ')[0] # Get the request method (e.g., GET, POST)
             path = message.split(' ')[1]         # Get the requested file path
 
-            print("Requested path:", path)  # just checking/diagnostics
+            print("Requested path:", path, "\n\n")  # just checking/diagnostics
 
             t_types = ['.html', '.htm', '.css', '.js', '.json'] #text types allowed
             b_types = ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'] #binary types allowed
@@ -115,7 +115,7 @@ def main(argv):
                 connectionSocket.close()
                 continue  # Go back to the start of the while loop to wait for another request
           
-            if path == "/":    # if nothing is specified after the /, return index.html
+            if path == "/":  # if nothing is specified after the /, return index.html
                 path = "/index.html"  # Default to index.html if root is requested    
             elif path.endswith("/"):
                 # If path ends with /, return index.html
@@ -185,7 +185,7 @@ def main(argv):
                 responseHeader += "Connection: close\r\n\r\n"
                 
                 # Send header and body
-                print("Response Header:\n", responseHeader)  # for diagnostics
+                print(" \n Response Header: \n\n", responseHeader)  # for diagnostics
 
                 connectionSocket.send(responseHeader.encode('UTF-8'))
                 connectionSocket.send(body)
