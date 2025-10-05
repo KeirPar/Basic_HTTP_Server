@@ -1,8 +1,3 @@
-'''
-Currently, this web server handles only one HTTP request at a time which in
-practice is not efficient for handling multiple connections but it gives us a
-starting point for looking at the HTTP protocol.
-'''
 
 # Import socket module
 from socket import *
@@ -60,26 +55,7 @@ def main(argv):
         # the rest of the clause is skipped
         # If the exception type matches the word after except
         # the except clause is executed
-        """
-        Things to check:
-            1. type of request - Is it supported or unsupported
-            2. the resource that is being looked for
-            3. the path (assuming that the root is in the same directory as the
-            server)
-            4. check the encoding type
-            5. generate a response header with the correct information - You
-            will need to think about the structure of what this need to be based
-            on the requirements for the lab.
-            6. send the response
-
-        TIP:
-            -check out what spilt() does to a Python string as you might find
-            it useful.
-
-        Remember:
-            -The socket connections have been taken care of for you; all you
-            need to concentrate on is the L5 protocol for HTTP.
-        """
+    
         try:
             # Receives the request message from the clientself.
             # It will wait until data has been recieved from client
@@ -90,10 +66,7 @@ def main(argv):
             print(message)  # this should print out what was received from the
                             # client
 
-            responseHeader = ""       # this is your empty response
-            # Start your coding here!!
-
-            #############################
+            responseHeader = ""     
 
             request_method = message.split(' ')[0] # Get the request method (e.g., GET, POST)
             path = message.split(' ')[1]         # Get the requested file path
@@ -194,38 +167,6 @@ def main(argv):
             else:
                 # File not found - will trigger 404
                 raise IOError
-
-            # This line forces the application to through a IO exception
-            # You will want to remove it, once you have tested your application
-
-            # Things to do...
-            # Extract the path of the requested object from the message
-            # You will need to extract out the request method and the path
-            # The first part of the HTTP header is the request method
-            # The path is the second part of HTTP header - You will need to do
-            # further processing on the path to check the criteria of what is
-            # permitted, etc
-            # IMPORTANT:  Start with the most basic request for index.html
-
-
-
-            # Check the type of file being requested....
-            # you will need to get the type of filename so you can set the
-            # correct mime encoding type
-
-
-            # if this is a binary file (ie png, jpg, pdf) is must be encoded for
-            # proper transfer and you need to think about the length....
-
-
-            #once everything is done, send the response header back
-          
-
-            # Send the content of the requested file to the connection socket
-
-            #send something else to indicate the end of the response header
-
-            # Close the client connection socket
      
 
         except IOError:
