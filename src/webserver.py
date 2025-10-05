@@ -93,6 +93,7 @@ def main(argv):
             responseHeader = ""       # this is your empty response
             # Start your coding here!!
 
+            #############################
 
             request_method = message.split(' ')[0] # Get the request method (e.g., GET, POST)
             path = message.split(' ')[1]         # Get the requested file path
@@ -103,6 +104,7 @@ def main(argv):
             b_types = ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'] #binary types allowed
 
             # Only handle GET requests for this assignment
+            #You can use an application like Postman to test other request types
             if request_method != "GET":
                 # Send HTTP response message for method not allowed (405)
                 responseHeader = "HTTP/1.1 405 Method Not Allowed\r\n"
@@ -111,19 +113,18 @@ def main(argv):
                 connectionSocket.send(responseHeader.encode('UTF-8'))
                 connectionSocket.send("<html><head></head><body><h1>405 Method Not Allowed</h1></body></html>\r\n".encode('UTF-8'))
                 connectionSocket.close()
-                return
-            
+                continue  # Go back to the start of the while loop to wait for another request
+          
             if path == "/":    # if nothing is specified after the /, return index.html
                 path = "/index.html"  # Default to index.html if root is requested    
             elif path.endswith("/"):
                 # If path ends with /, return index.html
                 path = path + "index.html"
-                
+
             filename = path.lstrip("/") #take off leading /
 
             # Check if the file has an extension
             file_ext = os.path.splitext(filename)[1].lower()
-
            
             if not file_ext:
                 # No extension found - try .html first, then .htm
@@ -143,7 +144,7 @@ def main(argv):
                 connectionSocket.send("HTTP/1.1 415 Unsupported Media Type\r\n\r\n".encode('UTF-8'))
                 connectionSocket.send("<html><head></head><body><h1>415 Unsupported Media Type</h1></body></html>\r\n".encode('UTF-8'))
                 connectionSocket.close()
-                return
+                continue  # Go back to the start of the while loop to wait for another request
 
             # Determine the content type based on file extension
             content_type = "text/html"  # default -html
