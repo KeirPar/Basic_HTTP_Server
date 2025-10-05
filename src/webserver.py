@@ -94,10 +94,10 @@ def main(argv):
             # Start your coding here!!
 
 
-
             request_method = message.split(' ')[0] # Get the request method (e.g., GET, POST)
             path = message.split(' ')[1]         # Get the requested file path
-            print("Requested path:", path)  # just checking
+
+            print("Requested path:", path)  # just checking/diagnostics
 
             t_types = ['.html', '.htm', '.css', '.js', '.json'] #text types allowed
             b_types = ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf'] #binary types allowed
@@ -112,43 +112,85 @@ def main(argv):
             
             if path == "/":    # if nothing is specified after the /, return index.html
                 path = "/index.html"  # Default to index.html if root is requested    
+            elif path.endswith("/"):
+                # If path ends with /, return index.html
+                path = path + "index.html"
 
             filename = path.lstrip("/") #take off leading /
 
-            # Check the file type
+            # Check if the file has an extension
             file_ext = os.path.splitext(filename)[1].lower()
 
-            if file_ext not in t_types:
+           
+            if not file_ext:
+                # No extension found - try .html first, then .htm
+                if os.path.isfile(filename + ".html"):
+                    filename = filename + ".html"
+                    file_ext = ".html"
+                elif os.path.isfile(filename + ".htm"):
+                    filename = filename + ".htm"
+                    file_ext = ".htm"
+                else:
+                    # Neither .html nor .htm exists - will trigger 404 later
+                    file_ext = ".html"  # Set extension for the check below
+
+            # Check the file type - only allow supported types
+            if file_ext not in t_types and file_ext not in b_types:
                 # Send HTTP response for unsupported file type
                 connectionSocket.send("HTTP/1.1 403 Forbidden\r\n\r\n".encode('UTF-8'))
                 connectionSocket.send("<html><head></head><body><h1>403 Forbidden - Unsupported file type</h1></body></html>\r\n".encode('UTF-8'))
                 connectionSocket.close()
                 return
-            
+
+            # Determine the content type based on file extension
+            content_type = "text/html"  # default -html
+            if file_ext == '.css':
+                content_type = "text/css"
+            elif file_ext == '.js':
+                content_type = "application/javascript"
+            elif file_ext == '.json':
+                content_type = "application/json"
+            elif file_ext == '.png':
+                content_type = "image/png"
+            elif file_ext in ['.jpg', '.jpeg']:
+                content_type = "image/jpeg"
+            elif file_ext == '.gif':
+                content_type = "image/gif"
+            elif file_ext == '.ico':
+                content_type = "image/x-icon"
+            elif file_ext == '.pdf':
+                content_type = "application/pdf"
                 
             if os.path.isfile(filename):
-                # Open and read the HTML file
-                with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
-                    body = f.read().encode('UTF-8')
+                # Check if binary or text file
+                if file_ext in b_types:
+                    # Binary file - read in binary mode
+                    with open(filename, 'rb') as f:
+                        body = f.read()
+                else:
+                    # Text file - read as text and encode
+                    with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+                        body = f.read().encode('UTF-8')
 
-                # Build simple HTTP 200 OK header
+                # Build HTTP 200 OK header response
                 responseHeader = "HTTP/1.1 200 OK\r\n"
                 responseHeader += f"Date: {datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')}\r\n"
                 responseHeader += "Server: Keirs_Server/1.0\r\n"
-                responseHeader += "Content-Type: text/html\r\n"
+                responseHeader += f"Content-Type: {content_type}\r\n"
                 responseHeader += f"Content-Length: {len(body)}\r\n"
                 responseHeader += "Connection: close\r\n\r\n"
                 
-
                 # Send header and body
+                print("Response Header:\n", responseHeader)  # for diagnostics
+
                 connectionSocket.send(responseHeader.encode('UTF-8'))
                 connectionSocket.send(body)
                 connectionSocket.close()
 
             else:
-                # File not found → triggers your existing IOError block
+                # File not found - will trigger 404
                 raise IOError
-            
+
             # This line forces the application to through a IO exception
             # You will want to remove it, once you have tested your application
 
