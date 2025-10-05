@@ -28,7 +28,13 @@ cd Basic_HTTP_Server
 
 ### Usage
 
-Instructions for running the server will depend on your implementation language. Add specific commands here.
+```bash
+
+python3 webserver.py -p 9999
+
+```
+
+Then go visit localhost:9999 and try accessing the different types of files in the directory
 
 ## Learning Objectives
 
