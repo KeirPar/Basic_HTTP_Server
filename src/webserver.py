@@ -105,7 +105,10 @@ def main(argv):
             # Only handle GET requests for this assignment
             if request_method != "GET":
                 # Send HTTP response message for method not allowed (405)
-                connectionSocket.send("HTTP/1.1 405 Method Not Allowed\r\n\r\n".encode('UTF-8'))
+                responseHeader = "HTTP/1.1 405 Method Not Allowed\r\n"
+                responseHeader += "Allow: GET\r\n"
+                responseHeader += "\r\n"
+                connectionSocket.send(responseHeader.encode('UTF-8'))
                 connectionSocket.send("<html><head></head><body><h1>405 Method Not Allowed</h1></body></html>\r\n".encode('UTF-8'))
                 connectionSocket.close()
                 return
@@ -115,7 +118,7 @@ def main(argv):
             elif path.endswith("/"):
                 # If path ends with /, return index.html
                 path = path + "index.html"
-
+                
             filename = path.lstrip("/") #take off leading /
 
             # Check if the file has an extension
@@ -134,11 +137,11 @@ def main(argv):
                     # Neither .html nor .htm exists - will trigger 404 later
                     file_ext = ".html"  # Set extension for the check below
 
-            # Check the file type - only allow supported types
+             # Check the file type - only allow supported types
             if file_ext not in t_types and file_ext not in b_types:
                 # Send HTTP response for unsupported file type
-                connectionSocket.send("HTTP/1.1 403 Forbidden\r\n\r\n".encode('UTF-8'))
-                connectionSocket.send("<html><head></head><body><h1>403 Forbidden - Unsupported file type</h1></body></html>\r\n".encode('UTF-8'))
+                connectionSocket.send("HTTP/1.1 415 Unsupported Media Type\r\n\r\n".encode('UTF-8'))
+                connectionSocket.send("<html><head></head><body><h1>415 Unsupported Media Type</h1></body></html>\r\n".encode('UTF-8'))
                 connectionSocket.close()
                 return
 
